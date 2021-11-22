@@ -18,16 +18,9 @@ func NewBAHelper(db *sql.DB) *BAMySQL {
 	return &BAMySQL{db: db}
 }
 
-func (dbm *BAMySQL) fetchOne(fetch *sql.Rows, newCallback func() interface{}) (interface{}, error) {
-	data := newCallback()
-	var helper BAHelper = data.(BAHelper)
-	err := helper.MapFields(fetch)
-	return data, err
-}
-
 func (dbm *BAMySQL) FetchOne(newCallback func() interface{}, stmt string, params ...interface{}) (interface{}, error) {
 	if newCallback != nil {
-		fetch, err := dbm.makeFetch(stmt, params)
+		fetch, err := dbm.makeFetch(stmt, params...)
 
 		if err != nil {
 			return nil, err
@@ -77,9 +70,16 @@ func (dbm *BAMySQL) makeSQLResult(stmt string, params ...interface{}) (sql.Resul
 	return result, err
 }
 
+func (dbm *BAMySQL) fetchOne(fetch *sql.Rows, newCallback func() interface{}) (interface{}, error) {
+	data := newCallback()
+	var helper BAHelper = data.(BAHelper)
+	err := helper.MapFields(fetch)
+	return data, err
+}
+
 func (dbm *BAMySQL) FetchMany(newCallback func() interface{}, stmt string, params ...interface{}) ([]interface{}, error) {
 	if newCallback != nil {
-		fetch, err := dbm.makeFetch(stmt, params)
+		fetch, err := dbm.makeFetch(stmt, params...)
 
 		if err != nil {
 			return nil, err
@@ -117,7 +117,7 @@ func (dbm *BAMySQL) FetchPage(rowsPerPage int, currentPage int, newCallback func
 }
 
 func (dbm *BAMySQL) Insert(stmt string, params ...interface{}) (interface{}, error) {
-	result, err := dbm.makeSQLResult(stmt, params)
+	result, err := dbm.makeSQLResult(stmt, params...)
 
 	if err == nil {
 		var id int64
@@ -131,7 +131,7 @@ func (dbm *BAMySQL) Insert(stmt string, params ...interface{}) (interface{}, err
 }
 
 func (dbm *BAMySQL) Update(stmt string, params ...interface{}) (int64, error) {
-	result, err := dbm.makeSQLResult(stmt, params)
+	result, err := dbm.makeSQLResult(stmt, params...)
 
 	if err == nil {
 		var total int64 = 0
@@ -145,7 +145,7 @@ func (dbm *BAMySQL) Update(stmt string, params ...interface{}) (int64, error) {
 }
 
 func (dbm *BAMySQL) Delete(stmt string, params ...interface{}) (int64, error) {
-	result, err := dbm.makeSQLResult(stmt, params)
+	result, err := dbm.makeSQLResult(stmt, params...)
 
 	if err == nil {
 		var total int64 = 0
