@@ -94,7 +94,6 @@ func (dbm *BAMySQL) FetchMany(newCallback func() interface{}, stmt string, param
 				}
 			}
 			fetch.Close()
-
 			return result, nil
 		}
 	} else {
@@ -116,17 +115,17 @@ func (dbm *BAMySQL) FetchPage(rowsPerPage int, currentPage int, newCallback func
 	return data, err
 }
 
-func (dbm *BAMySQL) Insert(stmt string, params ...interface{}) (interface{}, error) {
+func (dbm *BAMySQL) Insert(stmt string, params ...interface{}) (int64, error) {
 	result, err := dbm.makeSQLResult(stmt, params...)
 
 	if err == nil {
-		var id int64
-		if id, err = result.LastInsertId(); err == nil {
-			return id, err
+		if id, er := result.LastInsertId(); er == nil {
+			return id, er
+		} else {
+			return 0, err
 		}
-		return nil, err
 	} else {
-		return nil, err
+		return 0, err
 	}
 }
 
