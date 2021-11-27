@@ -2,11 +2,13 @@ package bamysqlhelper
 
 import (
 	"database/sql"
-	"strconv"
-	"strings"
+
+	"github.com/oabispo/bamysqlhelper/internal/bamyhelper"
 )
 
-type BAMySQL struct {
+//"github.com/oabispo/bamysqlhelper/internal/bamyhelper"
+
+type BASQL struct {
 	db *sql.DB
 }
 
@@ -14,173 +16,34 @@ type BAHelper interface {
 	MapFields(fetch *sql.Rows) error
 }
 
-func NewBAMySQL(db *sql.DB) *BAMySQL {
-	return &BAMySQL{db: db}
+func NewBASQL(db *sql.DB) *BASQL {
+	return &BASQL{db: db}
 }
 
-func (dbm *BAMySQL) FetchOne(newCallback func() interface{}, stmt string, params ...interface{}) (interface{}, error) {
-	if newCallback != nil {
-		fetch, err := dbm.makeFetch(stmt, params...)
-
-		if err != nil {
-			return nil, err
-		}
-
-		if fetch.Next() {
-			data, err := dbm.fetchOne(fetch, newCallback)
-			fetch.Close()
-
-			if err != nil {
-				return nil, err
-			} else {
-				return data, nil
-			}
-		} else {
-			fetch.Close()
-			return nil, nil
-		}
-	} else {
-		panic("callback não definida!")
-	}
+func (bas *BASQL) FetchOne(newCallback func() interface{}, stmt string, params ...interface{}) (interface{}, error) {
+	return bamyhelper.FetchOne(bas.db, newCallback, stmt, params...)
 }
 
-func (dbm *BAMySQL) makeFetch(stmt string, params ...interface{}) (*sql.Rows, error) {
-	var fetch *sql.Rows
-	var err error
-
-	if params != nil {
-		fetch, err = dbm.db.Query(stmt, params...)
-	} else {
-		fetch, err = dbm.db.Query(stmt)
-	}
-
-	return fetch, err
+func (bas *BASQL) FetchMany(newCallback func() interface{}, stmt string, params ...interface{}) ([]interface{}, error) {
+	return bamyhelper.FetchMany(bas.db, newCallback, stmt, params...)
 }
 
-func (dbm *BAMySQL) makeSQLResult(stmt string, params ...interface{}) (sql.Result, error) {
-	var err error
-	var result sql.Result
-
-	if params != nil {
-		result, err = dbm.db.Exec(stmt, params...)
-	} else {
-		result, err = dbm.db.Exec(stmt)
-	}
-
-	return result, err
+func (bas *BASQL) Insert(stmt string, params ...interface{}) (int64, error) {
+	return bamyhelper.Insert(bas.db, stmt, params...)
 }
 
-func (dbm *BAMySQL) fetchOne(fetch *sql.Rows, newCallback func() interface{}) (interface{}, error) {
-	data := newCallback()
-	var helper BAHelper = data.(BAHelper)
-	err := helper.MapFields(fetch)
-	return data, err
+func (bas *BASQL) Update(stmt string, params ...interface{}) (int64, error) {
+	return bamyhelper.Update(bas.db, stmt, params...)
 }
 
-func (dbm *BAMySQL) FetchMany(newCallback func() interface{}, stmt string, params ...interface{}) ([]interface{}, error) {
-	if newCallback != nil {
-		fetch, err := dbm.makeFetch(stmt, params...)
-
-		if err != nil {
-			return nil, err
-		} else {
-			var result []interface{} = make([]interface{}, 0, 10)
-			for fetch.Next() {
-				data, err := dbm.fetchOne(fetch, newCallback)
-				if err != nil {
-					panic(err.Error)
-				} else {
-					result = append(result, data)
-				}
-			}
-			fetch.Close()
-			return result, nil
-		}
-	} else {
-		panic("callback não definida!")
-	}
+func (bas *BASQL) Delete(stmt string, params ...interface{}) (int64, error) {
+	return bamyhelper.Delete(bas.db, stmt, params...)
 }
 
-func (dbm *BAMySQL) FetchPage(rowsPerPage int, currentPage int, newCallback func() interface{}, stmt string, params ...interface{}) ([]interface{}, error) {
-	// Paginador super simples. O suficiente para que eu possa deixar o retorno de dados um pouco melhor. O sonho seria construir um interpretador de SQL.
-	var sb strings.Builder
-	sb.WriteString(stmt)
-	sb.WriteString(" limit ")
-	sb.WriteString(strconv.Itoa(rowsPerPage * (currentPage - 1)))
-	sb.WriteString(", ")
-	sb.WriteString(strconv.Itoa(rowsPerPage))
-
-	var newStmt = sb.String()
-	data, err := dbm.FetchMany(newCallback, newStmt, params...)
-	return data, err
+func (bas *BASQL) RunSQL(stmt string, params ...interface{}) (interface{}, error) {
+	return bamyhelper.RunSQL(bas.db, stmt, params...)
 }
 
-func (dbm *BAMySQL) Insert(stmt string, params ...interface{}) (int64, error) {
-	result, err := dbm.makeSQLResult(stmt, params...)
-
-	if err == nil {
-		if id, er := result.LastInsertId(); er == nil {
-			return id, er
-		} else {
-			return 0, err
-		}
-	} else {
-		return 0, err
-	}
-}
-
-func (dbm *BAMySQL) Update(stmt string, params ...interface{}) (int64, error) {
-	result, err := dbm.makeSQLResult(stmt, params...)
-
-	if err == nil {
-		var total int64 = 0
-		if total, err = result.RowsAffected(); err == nil {
-			return total, err
-		}
-		return -1, err
-	} else {
-		return -1, err
-	}
-}
-
-func (dbm *BAMySQL) Delete(stmt string, params ...interface{}) (int64, error) {
-	result, err := dbm.makeSQLResult(stmt, params...)
-
-	if err == nil {
-		var total int64 = 0
-		if total, err = result.RowsAffected(); err == nil {
-			return total, err
-		}
-		return -1, err
-	} else {
-		return -1, err
-	}
-}
-
-func (dbm *BAMySQL) RunSQL(stmt string, params ...interface{}) (interface{}, error) {
-	processResult := func(result interface{}, err error) (interface{}, error) {
-		if err == nil {
-			switch result.(type) {
-			case *sql.Rows:
-				{
-					return result, err
-				}
-			default:
-				{
-					if total, e := result.(sql.Result).RowsAffected(); err == nil {
-						return total, e
-					}
-				}
-			}
-		}
-		return nil, err
-	}
-
-	if params != nil {
-		result, err := dbm.db.Exec(stmt, params...)
-		return processResult(result, err)
-	} else {
-		result, err := dbm.db.Exec(stmt)
-		return processResult(result, err)
-	}
+func (bas *BASQL) FetchPage(rowsPerPage int, currentPage int, newCallback func() interface{}, stmt string, params ...interface{}) ([]interface{}, error) {
+	return bamyhelper.FetchPage(bas.db, rowsPerPage, currentPage, newCallback, stmt, params...)
 }
