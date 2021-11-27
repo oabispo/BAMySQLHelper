@@ -2,17 +2,17 @@ package bamysqlhelper
 
 import (
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
-	"fmt"
 )
 
 type testTable struct {
-	numberField int `json:number`
-	textField   string `json:string`
+	numberField int       `json:number`
+	textField   string    `json:string`
 	dateField   time.Time `json:date`
 	timeField   time.Time `json:datetime`
-	floatField  float32 `json:number`
+	floatField  float32   `json:number`
 }
 
 func (p *testTable) MapFields(fetch *sql.Rows) error {
@@ -41,13 +41,13 @@ func convertRaw(data []interface{}) []*testTable {
 }
 
 func printStruct(items []*testTable) {
-	for _, item:= range items {
+	for _, item := range items {
 		fmt.Printf("\n%+v", item)
 	}
 }
 
 func TestCRUD(t *testing.T) {
-	helper := NewBAHelper(NewSQLConnection("sql10.freesqldatabase.com", "sql10452712", "sql10452712", "vBCfnfmcmj"))
+	helper := NewBAMySQL(NewSQLConnection("sql10.freesqldatabase.com", "sql10452712", "sql10452712", "vBCfnfmcmj"))
 	callback := func() interface{} {
 		return &testTable{}
 	}
@@ -59,8 +59,8 @@ func TestCRUD(t *testing.T) {
 	}
 
 	if data, err := helper.FetchMany(callback, "select * from TestTable where numberField = ?", 1); err == nil {
-		items:=convertRaw(data)
-		if (len(items) > 0 ) {
+		items := convertRaw(data)
+		if len(items) > 0 {
 			printStruct(items)
 		}
 	} else {
@@ -74,7 +74,7 @@ func TestCRUD(t *testing.T) {
 	}
 
 	if data, err := helper.FetchMany(callback, "select * from TestTable where numberField = ?", 1); err == nil {
-		items:=convertRaw(data)
+		items := convertRaw(data)
 		printStruct(items)
 	} else {
 		t.Fatal(err)
@@ -87,7 +87,7 @@ func TestCRUD(t *testing.T) {
 	}
 
 	if data, err := helper.FetchMany(callback, "select * from TestTable where numberField = ?", 1); err == nil {
-		items:=convertRaw(data)
+		items := convertRaw(data)
 		printStruct(items)
 	} else {
 		t.Fatal(err)

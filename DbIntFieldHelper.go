@@ -16,7 +16,7 @@ func (u *DbIntFieldHelper) MapFields(fetch *sql.Rows) error {
 }
 
 func GetIntValue(db *sql.DB, stmt string, params ...interface{}) (int, error) {
-	dbh := NewBAHelper(db)
+	dbh := NewBAMySQL(db)
 	data, err := dbh.FetchOne(func() interface{} { return &DbIntFieldHelper{} }, stmt, params...)
 
 	if err != nil {

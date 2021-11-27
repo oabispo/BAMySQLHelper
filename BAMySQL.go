@@ -14,7 +14,7 @@ type BAHelper interface {
 	MapFields(fetch *sql.Rows) error
 }
 
-func NewBAHelper(db *sql.DB) *BAMySQL {
+func NewBAMySQL(db *sql.DB) *BAMySQL {
 	return &BAMySQL{db: db}
 }
 

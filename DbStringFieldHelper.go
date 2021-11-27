@@ -16,7 +16,7 @@ func (u *DbStringFieldHelper) MapFields(fetch *sql.Rows) error {
 }
 
 func GetStringValue(db *sql.DB, stmt string, params ...interface{}) (string, error) {
-	dbh := NewBAHelper(db)
+	dbh := NewBAMySQL(db)
 	data, err := dbh.FetchOne(func() interface{} { return &DbStringFieldHelper{} }, stmt, params...)
 
 	if err != nil {
