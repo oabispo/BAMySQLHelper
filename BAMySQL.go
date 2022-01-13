@@ -20,6 +20,10 @@ func NewBASQL(db *sql.DB) *BASQL {
 	return &BASQL{db: db}
 }
 
+func (bas *BASQL) GetDB() *sql.DB {
+	return bas.db
+}
+
 func (bas *BASQL) FetchOne(newCallback func() interface{}, stmt string, params ...interface{}) (interface{}, error) {
 	return bamyhelper.FetchOne(bas.db, newCallback, stmt, params...)
 }

@@ -47,7 +47,7 @@ func printStruct(items []*testTable) {
 }
 
 func TestCRUD(t *testing.T) {
-	db := NewSQLConnection("sql10.freesqldatabase.com", "sql10452712", "sql10452712", "vBCfnfmcmj")
+	db := NewMySQLConnection("sql10.freesqldatabase.com", "sql10452712", "sql10452712", "vBCfnfmcmj")
 	helper := NewBASQL(db)
 	callback := func() interface{} {
 		return &testTable{}
