@@ -1,2 +1,2 @@
 # BAMySQLHelper
-An simpler way to make mySQL calls.
+An simpler way to make mySQL calls using GOlang.
